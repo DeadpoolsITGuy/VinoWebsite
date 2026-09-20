@@ -20,7 +20,7 @@ const Contact = React.forwardRef(({ siteConfig }, ref) => {
     siteConfig?.hours && siteConfig.hours.length > 0 ? siteConfig.hours : DEFAULT_HOURS;
 
   return (
-    <section ref={ref} id="contact" className="relative bg-foresta py-24 md:py-32 px-6">
+    <section ref={ref} id="contact" className="relative bg-foresta py-12 md:py-16 px-6">
       <div className="max-w-[1400px] mx-auto">
         <div className="flex items-center gap-3 justify-center mb-6">
           <div className="h-px w-10 bg-ruggine" />

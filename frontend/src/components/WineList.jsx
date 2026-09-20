@@ -29,7 +29,7 @@ const Category = ({ title, items }) => {
 
 const WineList = React.forwardRef(({ menu }, ref) => {
   return (
-    <section ref={ref} id="wine" className="relative bg-oliva py-24 md:py-32 px-6">
+    <section ref={ref} id="wine" className="relative bg-oliva py-12 md:py-16 px-6">
       <div className="max-w-[1400px] mx-auto">
         <div className="flex items-center gap-3 justify-center mb-6">
           <div className="h-px w-10 bg-bianco/50" />
