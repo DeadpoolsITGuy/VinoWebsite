@@ -101,3 +101,120 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Vino by Tonino - Wine bar website with admin panel for menu and site configuration management"
+
+backend:
+  - task: "GET /api/menu - Public endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Tested successfully. Returns default menu with all 5 categories (fizz, white, orange, rose, red). Each item has name and price fields. Returns saved menu when data exists in DB."
+  
+  - task: "GET /api/site-config - Public endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Tested successfully. Returns default site config with hero_image_url, hero_tagline, and since_year fields. Returns saved config when data exists in DB."
+  
+  - task: "POST /api/admin/login - Admin authentication"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Tested successfully. Accepts {password} and returns {token} for correct password (vino2025). Returns 401 for incorrect password. Token generation working correctly."
+  
+  - task: "GET /api/admin/verify - Token verification"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Tested successfully. Returns {ok: true} with valid Bearer token. Returns 401 without token or with invalid token. Authorization middleware working correctly."
+  
+  - task: "PUT /api/admin/menu - Update menu (protected)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Tested successfully. Accepts full MenuData with all 5 categories. Persists to MongoDB menu collection with _id='current'. Verified data persistence by fetching menu again. Returns 401 without valid token."
+  
+  - task: "PUT /api/admin/site-config - Update site config (protected)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Tested successfully. Accepts partial SiteConfig (hero_image_url, hero_tagline, since_year). Persists to db.site_config with _id='current'. Verified data persistence. Returns updated values. Returns 401 without valid token."
+  
+  - task: "POST /api/admin/upload - File upload (protected)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Tested successfully. Accepts image/jpeg, image/png, image/webp. Rejects other content types with 400. Returns {url, filename} on success. Verified uploaded file is accessible via GET at /api/uploads/... Returns 401 without valid token."
+
+frontend:
+  - task: "Frontend UI - Not tested per instructions"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not performed as per system instructions. Testing agent only tests backend APIs."
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "All backend endpoints tested and verified"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "testing"
+    message: "Completed comprehensive backend API testing for Vino by Tonino. All 14 test cases passed (100% success rate). Tested: public endpoints (menu, site-config), admin authentication (login with correct/incorrect password), token verification (valid/invalid/missing tokens), protected endpoints (menu update, site-config update, file upload), and authorization on all protected routes. Database persistence verified for menu and site-config updates. File upload functionality verified with accessible uploaded files. Final DB state: Menu contains test data (2 fizz, 1 white, 1 orange, 1 rose, 2 red items). Site config updated with test values (hero_tagline: 'Test Tagline by Tonino', since_year: 'MMXXVI'). No critical issues found. All endpoints working as expected."

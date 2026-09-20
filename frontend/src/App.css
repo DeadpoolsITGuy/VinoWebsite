@@ -1,13 +1,20 @@
 .App {
-  background: #1a1e12;
+  background: var(--foresta);
   min-height: 100vh;
 }
 
-/* Font families */
+/* Typography classes based on brand guide */
 .vino-display {
-  font-family: 'Prata', 'Bodoni Moda', 'Playfair Display', serif;
-  font-weight: 400;
-  letter-spacing: 0.02em;
+  /* Lemon Milk Medium substitute — geometric semi-bold sans */
+  font-family: 'Poppins', 'Lemon Milk', 'Helvetica Neue', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.vino-display-lite {
+  font-family: 'Poppins', 'Lemon Milk', 'Helvetica Neue', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.08em;
 }
 
 .vino-script {
@@ -16,15 +23,14 @@
 }
 
 .vino-mono {
-  font-family: 'IBM Plex Mono', 'JetBrains Mono', 'Courier New', monospace;
+  /* Apercu Mono substitute */
+  font-family: 'IBM Plex Mono', 'Apercu Mono', 'Menlo', 'Courier New', monospace;
   font-weight: 400;
 }
 
-body {
-  background: #1a1e12;
-  color: #f2e8cf;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.vino-mono-medium {
+  font-family: 'IBM Plex Mono', 'Apercu Mono', 'Menlo', monospace;
+  font-weight: 500;
 }
 
 /* Slow bounce for scroll indicator */
@@ -32,33 +38,20 @@ body {
   0%, 100% { transform: translateY(0); opacity: 0.6; }
   50% { transform: translateY(6px); opacity: 1; }
 }
+.animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
 
-.animate-bounce-slow {
-  animation: bounce-slow 2s ease-in-out infinite;
+/* Fade in */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+.animate-fade-up { animation: fade-up 0.8s ease-out both; }
 
-/* Smooth text selection */
-::selection {
-  background: #f2e8cf;
-  color: #1a1e12;
-}
+::selection { background: var(--bianco); color: var(--foresta); }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #1a1e12;
-}
-::-webkit-scrollbar-thumb {
-  background: #4a4d2c;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #5c603a;
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--foresta); }
+::-webkit-scrollbar-thumb { background: var(--oliva); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #756c47; }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
