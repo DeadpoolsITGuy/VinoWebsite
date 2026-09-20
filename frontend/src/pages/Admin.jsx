@@ -10,7 +10,18 @@ import {
   getSiteConfig,
   resolveAssetUrl,
 } from '../lib/api';
-import { Trash2, Plus, Upload, LogOut, Save, Loader2, Home, Eye } from 'lucide-react';
+import {
+  Trash2,
+  Plus,
+  Upload,
+  LogOut,
+  Save,
+  Loader2,
+  Eye,
+  ArrowLeft,
+  ArrowRight,
+  Star,
+} from 'lucide-react';
 
 const TOKEN_KEY = 'vino_admin_token';
 const CATEGORIES = ['fizz', 'white', 'orange', 'rose', 'red'];
@@ -27,7 +38,6 @@ const Admin = () => {
   const [menu, setMenu] = useState(null);
   const [siteConfig, setSiteConfig] = useState(null);
 
-  // Verify token on mount
   useEffect(() => {
     const check = async () => {
       if (!token) return;
@@ -48,7 +58,13 @@ const Admin = () => {
     try {
       const [m, s] = await Promise.all([getMenu(), getSiteConfig()]);
       setMenu(m);
-      setSiteConfig(s);
+      // Ensure hero_images exists
+      const cfg = { ...s };
+      if (!cfg.hero_images || cfg.hero_images.length === 0) {
+        cfg.hero_images = cfg.hero_image_url ? [cfg.hero_image_url] : [];
+      }
+      cfg.rotate_seconds = cfg.rotate_seconds || 6;
+      setSiteConfig(cfg);
     } finally {
       setLoading(false);
     }
@@ -68,7 +84,7 @@ const Admin = () => {
       localStorage.setItem(TOKEN_KEY, t);
       setToken(t);
       await loadData();
-    } catch (err) {
+    } catch {
       setLoginError('Incorrect password');
     } finally {
       setLoading(false);
@@ -82,17 +98,38 @@ const Admin = () => {
     setSiteConfig(null);
   };
 
+  const persistConfig = async (nextCfg, successMsg) => {
+    setSaving(true);
+    try {
+      const saved = await adminUpdateSiteConfig(token, nextCfg);
+      const cfg = { ...saved };
+      if (!cfg.hero_images) cfg.hero_images = nextCfg.hero_images || [];
+      cfg.rotate_seconds = cfg.rotate_seconds || nextCfg.rotate_seconds || 6;
+      setSiteConfig(cfg);
+      if (successMsg) showToast(successMsg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setUploading(true);
     try {
-      const { url } = await adminUploadImage(token, file);
-      const updated = { ...siteConfig, hero_image_url: url };
-      const saved = await adminUpdateSiteConfig(token, updated);
-      setSiteConfig(saved);
-      showToast('Header image updated');
-    } catch (err) {
+      const uploaded = [];
+      for (const f of files) {
+        const { url } = await adminUploadImage(token, f);
+        uploaded.push(url);
+      }
+      const nextImages = [...(siteConfig.hero_images || []), ...uploaded];
+      const nextCfg = {
+        ...siteConfig,
+        hero_images: nextImages,
+        hero_image_url: nextImages[0],
+      };
+      await persistConfig(nextCfg, `Added ${uploaded.length} image${uploaded.length > 1 ? 's' : ''}`);
+    } catch {
       showToast('Upload failed');
     } finally {
       setUploading(false);
@@ -100,15 +137,30 @@ const Admin = () => {
     }
   };
 
-  const handleSaveConfig = async () => {
-    setSaving(true);
-    try {
-      const saved = await adminUpdateSiteConfig(token, siteConfig);
-      setSiteConfig(saved);
-      showToast('Hero settings saved');
-    } finally {
-      setSaving(false);
-    }
+  const moveImage = (idx, dir) => {
+    const list = [...(siteConfig.hero_images || [])];
+    const target = idx + dir;
+    if (target < 0 || target >= list.length) return;
+    [list[idx], list[target]] = [list[target], list[idx]];
+    setSiteConfig({ ...siteConfig, hero_images: list, hero_image_url: list[0] });
+  };
+
+  const removeImage = (idx) => {
+    const list = [...(siteConfig.hero_images || [])];
+    list.splice(idx, 1);
+    setSiteConfig({ ...siteConfig, hero_images: list, hero_image_url: list[0] || null });
+  };
+
+  const setPrimary = (idx) => {
+    if (idx === 0) return;
+    const list = [...(siteConfig.hero_images || [])];
+    const [item] = list.splice(idx, 1);
+    list.unshift(item);
+    setSiteConfig({ ...siteConfig, hero_images: list, hero_image_url: list[0] });
+  };
+
+  const handleSaveHero = () => {
+    persistConfig(siteConfig, 'Hero settings saved');
   };
 
   const handleSaveMenu = async () => {
@@ -129,19 +181,11 @@ const Admin = () => {
     });
   };
 
-  const addItem = (cat) => {
-    setMenu((prev) => ({
-      ...prev,
-      [cat]: [...(prev[cat] || []), { name: '', price: '' }],
-    }));
-  };
+  const addItem = (cat) =>
+    setMenu((prev) => ({ ...prev, [cat]: [...(prev[cat] || []), { name: '', price: '' }] }));
 
-  const removeItem = (cat, idx) => {
-    setMenu((prev) => ({
-      ...prev,
-      [cat]: prev[cat].filter((_, i) => i !== idx),
-    }));
-  };
+  const removeItem = (cat, idx) =>
+    setMenu((prev) => ({ ...prev, [cat]: prev[cat].filter((_, i) => i !== idx) }));
 
   if (!token) {
     return (
@@ -193,6 +237,8 @@ const Admin = () => {
     );
   }
 
+  const heroImages = siteConfig.hero_images || [];
+
   return (
     <div className="min-h-screen bg-foresta text-bianco">
       {/* Top bar */}
@@ -221,86 +267,153 @@ const Admin = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-12">
-        {/* Header image section */}
+        {/* Header gallery */}
         <section>
           <div className="flex items-baseline gap-3 mb-4">
             <div className="vino-mono-medium text-ruggine text-[10px] tracking-[0.4em]">01</div>
-            <h2 className="vino-display text-2xl tracking-[0.15em]">HEADER IMAGE</h2>
+            <h2 className="vino-display text-2xl tracking-[0.15em]">HEADER GALLERY</h2>
           </div>
           <p className="vino-mono text-bianco/70 text-xs mb-6 max-w-2xl">
-            Upload a new hero image (JPG/PNG/WEBP, up to 10MB). It will replace the image at the top of the site instantly.
+            Upload one or more hero images (JPG/PNG/WEBP, up to 10MB each). The site cross-fades between them. Reorder with the arrows — the first image is shown on load.
           </p>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="relative aspect-[16/9] bg-black/40 overflow-hidden border border-bianco/10">
-              {siteConfig.hero_image_url && (
-                <img
-                  src={resolveAssetUrl(siteConfig.hero_image_url)}
-                  alt="Current hero"
-                  className="w-full h-full object-cover"
-                />
-              )}
-              <div className="absolute top-2 left-2 vino-mono-medium text-[9px] tracking-[0.35em] bg-foresta/80 px-2 py-1">
-                CURRENT
+
+          {/* Upload button */}
+          <label className="block mb-8 cursor-pointer">
+            <div className="border border-dashed border-bianco/30 hover:border-ruggine transition-colors p-8 text-center">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleUpload}
+                className="hidden"
+                disabled={uploading}
+                multiple
+              />
+              <div className="flex flex-col items-center gap-3 pointer-events-none">
+                {uploading ? (
+                  <Loader2 className="animate-spin text-ruggine" size={28} />
+                ) : (
+                  <Upload className="text-bianco" size={28} />
+                )}
+                <div className="vino-mono text-xs text-bianco/80">
+                  {uploading ? 'Uploading…' : 'Click to select one or more images'}
+                </div>
+                <div className="vino-mono text-[10px] text-bianco/50">
+                  JPG, PNG, or WEBP · max 10MB each
+                </div>
               </div>
             </div>
-            <div className="space-y-4">
-              <label className="block">
-                <div className="vino-mono-medium text-[10px] tracking-[0.35em] mb-2">UPLOAD NEW IMAGE</div>
-                <div className="border border-dashed border-bianco/30 hover:border-ruggine transition-colors p-6 text-center cursor-pointer group">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleUpload}
-                    className="hidden"
-                    disabled={uploading}
+          </label>
+
+          {/* Gallery grid */}
+          {heroImages.length === 0 ? (
+            <div className="vino-mono text-bianco/50 text-[12px] italic">
+              No images yet — upload above to get started.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+              {heroImages.map((url, idx) => (
+                <div key={url + idx} className="group relative aspect-[16/10] bg-black/40 overflow-hidden border border-bianco/10">
+                  <img
+                    src={resolveAssetUrl(url)}
+                    alt={`Hero ${idx + 1}`}
+                    className="w-full h-full object-cover"
                   />
-                  <div className="flex flex-col items-center gap-3 pointer-events-none">
-                    {uploading ? (
-                      <Loader2 className="animate-spin text-ruggine" size={28} />
-                    ) : (
-                      <Upload className="text-bianco group-hover:text-ruggine transition-colors" size={28} />
+                  <div className="absolute top-2 left-2 flex items-center gap-1">
+                    <span className="vino-mono-medium text-[9px] tracking-[0.35em] bg-foresta/85 px-2 py-1">
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+                    {idx === 0 && (
+                      <span className="vino-mono-medium text-[9px] tracking-[0.35em] bg-ruggine text-bianco px-2 py-1 flex items-center gap-1">
+                        <Star size={10} /> PRIMARY
+                      </span>
                     )}
-                    <div className="vino-mono text-xs text-bianco/80">
-                      {uploading ? 'Uploading…' : 'Click to select an image'}
-                    </div>
-                    <div className="vino-mono text-[10px] text-bianco/50">JPG, PNG, or WEBP · max 10MB</div>
+                  </div>
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/45 flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => moveImage(idx, -1)}
+                      disabled={idx === 0}
+                      className="p-2 bg-foresta text-bianco hover:bg-ruggine disabled:opacity-30 transition-colors"
+                      aria-label="Move left"
+                    >
+                      <ArrowLeft size={14} />
+                    </button>
+                    {idx !== 0 && (
+                      <button
+                        onClick={() => setPrimary(idx)}
+                        className="p-2 bg-foresta text-bianco hover:bg-ruggine transition-colors"
+                        aria-label="Make primary"
+                        title="Make primary"
+                      >
+                        <Star size={14} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => moveImage(idx, 1)}
+                      disabled={idx === heroImages.length - 1}
+                      className="p-2 bg-foresta text-bianco hover:bg-ruggine disabled:opacity-30 transition-colors"
+                      aria-label="Move right"
+                    >
+                      <ArrowRight size={14} />
+                    </button>
+                    <button
+                      onClick={() => removeImage(idx)}
+                      className="p-2 bg-foresta text-bianco hover:bg-ruggine transition-colors"
+                      aria-label="Remove"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
-              </label>
-
-              <div>
-                <div className="vino-mono-medium text-[10px] tracking-[0.35em] mb-2">TAGLINE (SCRIPT)</div>
-                <input
-                  type="text"
-                  value={siteConfig.hero_tagline || ''}
-                  onChange={(e) =>
-                    setSiteConfig({ ...siteConfig, hero_tagline: e.target.value })
-                  }
-                  className="w-full bg-transparent border border-bianco/25 focus:border-bianco text-bianco vino-mono px-3 py-2 outline-none transition-colors text-sm"
-                />
-              </div>
-
-              <div>
-                <div className="vino-mono-medium text-[10px] tracking-[0.35em] mb-2">YEAR BADGE</div>
-                <input
-                  type="text"
-                  value={siteConfig.since_year || ''}
-                  onChange={(e) =>
-                    setSiteConfig({ ...siteConfig, since_year: e.target.value })
-                  }
-                  className="w-full bg-transparent border border-bianco/25 focus:border-bianco text-bianco vino-mono px-3 py-2 outline-none transition-colors text-sm"
-                />
-              </div>
-
-              <button
-                onClick={handleSaveConfig}
-                disabled={saving}
-                className="w-full bg-ruggine hover:bg-ruggine/85 text-bianco vino-mono-medium tracking-[0.3em] text-xs py-3 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                SAVE HERO SETTINGS
-              </button>
+              ))}
             </div>
+          )}
+
+          <div className="grid md:grid-cols-3 gap-6 mt-4">
+            <div>
+              <div className="vino-mono-medium text-[10px] tracking-[0.35em] mb-2">TAGLINE (SCRIPT)</div>
+              <input
+                type="text"
+                value={siteConfig.hero_tagline || ''}
+                onChange={(e) => setSiteConfig({ ...siteConfig, hero_tagline: e.target.value })}
+                className="w-full bg-transparent border border-bianco/25 focus:border-bianco text-bianco vino-mono px-3 py-2 outline-none transition-colors text-sm"
+              />
+            </div>
+            <div>
+              <div className="vino-mono-medium text-[10px] tracking-[0.35em] mb-2">YEAR BADGE</div>
+              <input
+                type="text"
+                value={siteConfig.since_year || ''}
+                onChange={(e) => setSiteConfig({ ...siteConfig, since_year: e.target.value })}
+                className="w-full bg-transparent border border-bianco/25 focus:border-bianco text-bianco vino-mono px-3 py-2 outline-none transition-colors text-sm"
+              />
+            </div>
+            <div>
+              <div className="vino-mono-medium text-[10px] tracking-[0.35em] mb-2">ROTATE EVERY (SECONDS)</div>
+              <input
+                type="number"
+                min={2}
+                max={30}
+                value={siteConfig.rotate_seconds || 6}
+                onChange={(e) =>
+                  setSiteConfig({
+                    ...siteConfig,
+                    rotate_seconds: parseInt(e.target.value || '6', 10),
+                  })
+                }
+                className="w-full bg-transparent border border-bianco/25 focus:border-bianco text-bianco vino-mono px-3 py-2 outline-none transition-colors text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleSaveHero}
+              disabled={saving}
+              className="bg-ruggine hover:bg-ruggine/85 text-bianco vino-mono-medium tracking-[0.3em] text-xs px-6 py-3 transition-colors flex items-center gap-2 disabled:opacity-60"
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              SAVE HERO SETTINGS
+            </button>
           </div>
         </section>
 

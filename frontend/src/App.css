@@ -5,14 +5,13 @@
 
 /* Typography classes based on brand guide */
 .vino-display {
-  /* Lemon Milk Medium substitute — geometric semi-bold sans */
-  font-family: 'Poppins', 'Lemon Milk', 'Helvetica Neue', sans-serif;
-  font-weight: 700;
+  font-family: 'Lemon Milk', 'Helvetica Neue', sans-serif;
+  font-weight: 500;
   letter-spacing: 0.04em;
 }
 
 .vino-display-lite {
-  font-family: 'Poppins', 'Lemon Milk', 'Helvetica Neue', sans-serif;
+  font-family: 'Lemon Milk', 'Helvetica Neue', sans-serif;
   font-weight: 500;
   letter-spacing: 0.08em;
 }
@@ -23,14 +22,13 @@
 }
 
 .vino-mono {
-  /* Apercu Mono substitute */
-  font-family: 'IBM Plex Mono', 'Apercu Mono', 'Menlo', 'Courier New', monospace;
+  font-family: 'Apercu Mono', 'IBM Plex Mono', 'Menlo', 'Courier New', monospace;
   font-weight: 400;
 }
 
 .vino-mono-medium {
-  font-family: 'IBM Plex Mono', 'Apercu Mono', 'Menlo', monospace;
-  font-weight: 500;
+  font-family: 'Apercu Mono', 'IBM Plex Mono', 'Menlo', monospace;
+  font-weight: 700;
 }
 
 /* Slow bounce for scroll indicator */

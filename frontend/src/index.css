@@ -1,7 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Great+Vibes&family=IBM+Plex+Mono:wght@300;400;500;600&family=Cormorant+Garamond:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
 
-/* Lemon Milk substitute — we load Poppins (heavy) as the closest free web equivalent.
-   The brand's actual Lemon Milk Medium can be added via @font-face if you host the file. */
+/* Vino brand fonts — served locally from /src/fonts */
+@font-face {
+    font-family: 'Lemon Milk';
+    src: url('./fonts/LEMONMILK-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Apercu Mono';
+    src: url('./fonts/ApercuMonoPro-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Apercu Mono';
+    src: url('./fonts/ApercuMonoPro-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -17,7 +39,7 @@
 
 body {
     margin: 0;
-    font-family: 'IBM Plex Mono', 'Apercu Mono', 'Menlo', 'Courier New', monospace;
+    font-family: 'Apercu Mono', 'IBM Plex Mono', 'Menlo', 'Courier New', monospace;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background: var(--foresta);
@@ -25,7 +47,7 @@ body {
 }
 
 code {
-    font-family: 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
+    font-family: 'Apercu Mono', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 @layer base {

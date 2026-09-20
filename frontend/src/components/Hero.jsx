@@ -3,27 +3,68 @@ import { ChevronDown } from 'lucide-react';
 import { resolveAssetUrl } from '../lib/api';
 
 const Hero = ({ onScrollNext, siteConfig }) => {
-  const [loaded, setLoaded] = useState(false);
-  const heroUrl = resolveAssetUrl(siteConfig?.hero_image_url);
+  const rawImages =
+    (siteConfig?.hero_images && siteConfig.hero_images.length > 0
+      ? siteConfig.hero_images
+      : siteConfig?.hero_image_url
+      ? [siteConfig.hero_image_url]
+      : []) || [];
+  const images = rawImages.map(resolveAssetUrl).filter(Boolean);
+  const rotateSeconds = Math.max(2, siteConfig?.rotate_seconds || 6);
 
+  const [index, setIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+
+  // Preload all images
   useEffect(() => {
-    if (!heroUrl) return;
-    setLoaded(false);
-    const img = new Image();
-    img.src = heroUrl;
-    img.onload = () => setLoaded(true);
-    img.onerror = () => setLoaded(true);
-  }, [heroUrl]);
+    if (!images.length) return;
+    let mounted = true;
+    Promise.all(
+      images.map(
+        (src) =>
+          new Promise((res) => {
+            const img = new Image();
+            img.onload = () => res(true);
+            img.onerror = () => res(true);
+            img.src = src;
+          })
+      )
+    ).then(() => mounted && setLoaded(true));
+    return () => {
+      mounted = false;
+    };
+  }, [images.join('|')]);
+
+  // Rotate
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % images.length);
+    }, rotateSeconds * 1000);
+    return () => clearInterval(id);
+  }, [images.length, rotateSeconds]);
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-foresta">
-      <div
-        className={`absolute inset-0 bg-cover bg-center transition-all duration-[1800ms] ease-out ${
-          loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
-        }`}
-        style={{ backgroundImage: `url(${heroUrl})` }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-foresta/70" />
+      {/* Layered images with long cross-fade + subtle ken burns zoom */}
+      {images.map((src, i) => {
+        const isActive = loaded && i === index;
+        return (
+          <div
+            key={src + i}
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${src})`,
+              opacity: isActive ? 1 : 0,
+              transform: isActive ? 'scale(1.06)' : 'scale(1.0)',
+              transition:
+                'opacity 2200ms cubic-bezier(0.4, 0.0, 0.2, 1), transform 8000ms ease-out',
+              willChange: 'opacity, transform',
+            }}
+          />
+        );
+      })}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-foresta/70 pointer-events-none" />
 
       {/* SINCE 2025 top-left badge */}
       <div className="absolute top-24 md:top-28 left-6 md:left-12 z-10">
@@ -59,6 +100,22 @@ const Hero = ({ onScrollNext, siteConfig }) => {
           </div>
         </div>
       </div>
+
+      {/* Slide indicators */}
+      {images.length > 1 && (
+        <div className="absolute bottom-24 md:bottom-28 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className={`h-px transition-all duration-500 ${
+                i === index ? 'w-10 bg-bianco' : 'w-5 bg-bianco/40 hover:bg-bianco/70'
+              }`}
+              aria-label={`Slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
 
       <button
         onClick={onScrollNext}

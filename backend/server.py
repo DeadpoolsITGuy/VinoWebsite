@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Header
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -21,10 +21,6 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Uploads dir
-UPLOADS_DIR = ROOT_DIR / 'uploads'
-UPLOADS_DIR.mkdir(exist_ok=True)
-
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'vino2025')
 
 # Simple in-memory token store (fine for a single-admin MVP)
@@ -32,9 +28,6 @@ ACTIVE_TOKENS = set()
 
 # Create the main app
 app = FastAPI()
-
-# Serve uploaded files under /api/uploads/*
-app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 api_router = APIRouter(prefix="/api")
 
@@ -73,8 +66,10 @@ class MenuData(BaseModel):
 
 class SiteConfig(BaseModel):
     hero_image_url: Optional[str] = None
+    hero_images: Optional[List[str]] = None
     hero_tagline: Optional[str] = None
     since_year: Optional[str] = "MMXXV"
+    rotate_seconds: Optional[int] = 6
 
 
 # ---------- Defaults ----------
@@ -122,8 +117,12 @@ DEFAULT_MENU: Dict[str, List[Dict[str, str]]] = {
 
 DEFAULT_SITE_CONFIG = {
     "hero_image_url": "https://images.squarespace-cdn.com/content/v1/67f667faca6fd714aaa732b0/dcb76f8f-f576-4f2a-a31d-031d8d8a7698/uliana-kopanytsia-epHhP3H71sw-unsplash.jpg",
+    "hero_images": [
+        "https://images.squarespace-cdn.com/content/v1/67f667faca6fd714aaa732b0/dcb76f8f-f576-4f2a-a31d-031d8d8a7698/uliana-kopanytsia-epHhP3H71sw-unsplash.jpg",
+    ],
     "hero_tagline": "by tonino",
     "since_year": "MMXXV",
+    "rotate_seconds": 6,
 }
 
 
@@ -171,6 +170,14 @@ async def get_site_config():
     if not doc:
         return DEFAULT_SITE_CONFIG
     doc.pop("_id", None)
+    # Normalise: ensure hero_images is populated, fall back to hero_image_url
+    if not doc.get("hero_images"):
+        if doc.get("hero_image_url"):
+            doc["hero_images"] = [doc["hero_image_url"]]
+        else:
+            doc["hero_images"] = DEFAULT_SITE_CONFIG["hero_images"]
+    if not doc.get("hero_image_url") and doc.get("hero_images"):
+        doc["hero_image_url"] = doc["hero_images"][0]
     return doc
 
 
@@ -218,15 +225,36 @@ async def upload_image(file: UploadFile = File(...), _: bool = Depends(require_a
     allowed = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
     if file.content_type not in allowed:
         raise HTTPException(status_code=400, detail="Only jpg/png/webp images allowed")
-    ext = os.path.splitext(file.filename or "")[1].lower() or ".jpg"
-    safe_name = f"{uuid.uuid4().hex}{ext}"
-    dest = UPLOADS_DIR / safe_name
     content = await file.read()
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File larger than 10MB")
-    with open(dest, "wb") as f:
-        f.write(content)
-    return {"url": f"/api/uploads/{safe_name}", "filename": safe_name}
+    image_id = uuid.uuid4().hex
+    await db.images.insert_one({
+        "_id": image_id,
+        "content_type": file.content_type,
+        "data": content,
+        "filename": file.filename or f"{image_id}.jpg",
+        "created_at": datetime.utcnow(),
+    })
+    return {"url": f"/api/images/{image_id}", "filename": file.filename or image_id}
+
+
+@api_router.get("/images/{image_id}")
+async def get_image(image_id: str):
+    doc = await db.images.find_one({"_id": image_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Image not found")
+    return Response(
+        content=doc["data"],
+        media_type=doc.get("content_type", "image/jpeg"),
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
+
+
+@api_router.delete("/admin/images/{image_id}")
+async def delete_image(image_id: str, _: bool = Depends(require_admin)):
+    res = await db.images.delete_one({"_id": image_id})
+    return {"deleted": res.deleted_count > 0}
 
 
 # ---------- Wire up ----------
