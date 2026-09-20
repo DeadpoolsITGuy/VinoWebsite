@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, ShoppingBag, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const Navbar = ({ onNavigate }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -42,13 +42,8 @@ const Navbar = ({ onNavigate }) => {
             <span className="vino-script text-base md:text-lg">by tonino</span>
           </button>
 
-          <button
-            className="text-bianco hover:text-ruggine transition-colors flex items-center gap-2"
-            aria-label="Cart"
-          >
-            <ShoppingBag size={18} strokeWidth={1.6} />
-            <span className="hidden md:inline vino-mono-medium text-[11px] tracking-[0.3em]">0</span>
-          </button>
+          {/* Right-side spacer to keep the logo centred */}
+          <div className="w-[70px] md:w-[90px]" aria-hidden="true" />
         </div>
       </header>
 
