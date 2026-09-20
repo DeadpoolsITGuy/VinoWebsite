@@ -1,20 +1,24 @@
 import React from 'react';
 import { Instagram, Mail, MapPin, Clock } from 'lucide-react';
 
-const contactInfo = {
+const DEFAULT_HOURS = [
+  { day: 'Wednesday', time: '2pm–late' },
+  { day: 'Thursday', time: '2pm–late' },
+  { day: 'Friday', time: '12–late' },
+  { day: 'Saturday', time: '12–late' },
+  { day: 'Sunday', time: '2–late' },
+];
+
+const CONTACT = {
   address: ['59 Kempock St', 'Gourock', 'PA19 1NF'],
-  hours: [
-    { day: 'Wednesday', time: '2pm–late' },
-    { day: 'Thursday', time: '2pm–late' },
-    { day: 'Friday', time: '12–late' },
-    { day: 'Saturday', time: '12–late' },
-    { day: 'Sunday', time: '2–late' },
-  ],
   email: 'vino@toninos.co.uk',
   instagram: 'https://www.instagram.com/vinobytonino/',
 };
 
-const Contact = React.forwardRef((props, ref) => {
+const Contact = React.forwardRef(({ siteConfig }, ref) => {
+  const hours =
+    siteConfig?.hours && siteConfig.hours.length > 0 ? siteConfig.hours : DEFAULT_HOURS;
+
   return (
     <section ref={ref} id="contact" className="relative bg-foresta py-24 md:py-32 px-6">
       <div className="max-w-[1400px] mx-auto">
@@ -38,7 +42,7 @@ const Contact = React.forwardRef((props, ref) => {
             </div>
             <div className="vino-mono-medium text-[11px] tracking-[0.4em] text-bianco mb-5">ADDRESS</div>
             <div className="vino-mono text-[12px] text-bianco/90 space-y-1">
-              {contactInfo.address.map((line, i) => (
+              {CONTACT.address.map((line, i) => (
                 <div key={i}>{line}</div>
               ))}
             </div>
@@ -50,7 +54,7 @@ const Contact = React.forwardRef((props, ref) => {
             </div>
             <div className="vino-mono-medium text-[11px] tracking-[0.4em] text-bianco mb-5">HOURS</div>
             <div className="vino-mono text-[12px] text-bianco/90 space-y-1">
-              {contactInfo.hours.map((h, i) => (
+              {hours.map((h, i) => (
                 <div key={i}>
                   {h.day} {h.time}
                 </div>
@@ -64,17 +68,17 @@ const Contact = React.forwardRef((props, ref) => {
             </div>
             <div className="vino-mono-medium text-[11px] tracking-[0.4em] text-bianco mb-5">EMAIL</div>
             <a
-              href={`mailto:${contactInfo.email}`}
+              href={`mailto:${CONTACT.email}`}
               className="vino-mono text-[12px] text-bianco/90 underline underline-offset-4 hover:text-ruggine transition-colors"
             >
-              {contactInfo.email}
+              {CONTACT.email}
             </a>
           </div>
         </div>
 
         <div className="flex justify-center mt-16">
           <a
-            href={contactInfo.instagram}
+            href={CONTACT.instagram}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 vino-mono-medium text-[12px] tracking-[0.25em] text-bianco hover:text-ruggine underline underline-offset-4 transition-colors"

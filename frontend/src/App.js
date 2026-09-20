@@ -30,7 +30,7 @@ const Home = () => {
       <Navbar onNavigate={handleNavigate} />
       <Hero onScrollNext={() => handleNavigate('wine')} siteConfig={siteConfig} />
       <WineList ref={wineRef} menu={menu} />
-      <Contact ref={contactRef} />
+      <Contact ref={contactRef} siteConfig={siteConfig} />
     </div>
   );
 };

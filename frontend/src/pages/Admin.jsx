@@ -64,6 +64,15 @@ const Admin = () => {
         cfg.hero_images = cfg.hero_image_url ? [cfg.hero_image_url] : [];
       }
       cfg.rotate_seconds = cfg.rotate_seconds || 6;
+      if (!cfg.hours || cfg.hours.length === 0) {
+        cfg.hours = [
+          { day: 'Wednesday', time: '2pm–late' },
+          { day: 'Thursday', time: '2pm–late' },
+          { day: 'Friday', time: '12–late' },
+          { day: 'Saturday', time: '12–late' },
+          { day: 'Sunday', time: '2–late' },
+        ];
+      }
       setSiteConfig(cfg);
     } finally {
       setLoading(false);
@@ -161,6 +170,34 @@ const Admin = () => {
 
   const handleSaveHero = () => {
     persistConfig(siteConfig, 'Hero settings saved');
+  };
+
+  const updateHour = (idx, field, value) => {
+    const list = [...(siteConfig.hours || [])];
+    list[idx] = { ...list[idx], [field]: value };
+    setSiteConfig({ ...siteConfig, hours: list });
+  };
+
+  const addHour = () => {
+    const list = [...(siteConfig.hours || []), { day: '', time: '' }];
+    setSiteConfig({ ...siteConfig, hours: list });
+  };
+
+  const removeHour = (idx) => {
+    const list = (siteConfig.hours || []).filter((_, i) => i !== idx);
+    setSiteConfig({ ...siteConfig, hours: list });
+  };
+
+  const moveHour = (idx, dir) => {
+    const list = [...(siteConfig.hours || [])];
+    const target = idx + dir;
+    if (target < 0 || target >= list.length) return;
+    [list[idx], list[target]] = [list[target], list[idx]];
+    setSiteConfig({ ...siteConfig, hours: list });
+  };
+
+  const handleSaveHours = () => {
+    persistConfig(siteConfig, 'Hours saved');
   };
 
   const handleSaveMenu = async () => {
@@ -419,10 +456,90 @@ const Admin = () => {
 
         <div className="h-px bg-bianco/10" />
 
-        {/* Menu section */}
+        {/* Hours section */}
         <section>
           <div className="flex items-baseline gap-3 mb-4">
             <div className="vino-mono-medium text-ruggine text-[10px] tracking-[0.4em]">02</div>
+            <h2 className="vino-display text-2xl tracking-[0.15em]">OPENING HOURS</h2>
+          </div>
+          <p className="vino-mono text-bianco/70 text-xs mb-6 max-w-2xl">
+            Edit the day/time pairs shown in the "Get In Touch" section. Add days, reorder them, or remove any that don't apply.
+          </p>
+
+          <div className="max-w-2xl space-y-2">
+            {(siteConfig.hours || []).map((h, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="vino-mono-medium text-bianco/40 text-[10px] tracking-[0.3em] w-6 text-right">
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+                <input
+                  type="text"
+                  value={h.day}
+                  onChange={(e) => updateHour(idx, 'day', e.target.value)}
+                  placeholder="Wednesday"
+                  className="flex-1 bg-black/20 border border-bianco/15 focus:border-bianco text-bianco vino-mono text-[12px] px-3 py-2 outline-none transition-colors"
+                />
+                <input
+                  type="text"
+                  value={h.time}
+                  onChange={(e) => updateHour(idx, 'time', e.target.value)}
+                  placeholder="2pm–late"
+                  className="flex-1 bg-black/20 border border-bianco/15 focus:border-bianco text-bianco vino-mono text-[12px] px-3 py-2 outline-none transition-colors"
+                />
+                <button
+                  onClick={() => moveHour(idx, -1)}
+                  disabled={idx === 0}
+                  className="text-bianco/50 hover:text-bianco disabled:opacity-20 transition-colors p-1"
+                  aria-label="Move up"
+                >
+                  <ArrowLeft size={14} className="rotate-90" />
+                </button>
+                <button
+                  onClick={() => moveHour(idx, 1)}
+                  disabled={idx === (siteConfig.hours || []).length - 1}
+                  className="text-bianco/50 hover:text-bianco disabled:opacity-20 transition-colors p-1"
+                  aria-label="Move down"
+                >
+                  <ArrowRight size={14} className="rotate-90" />
+                </button>
+                <button
+                  onClick={() => removeHour(idx)}
+                  className="text-bianco/50 hover:text-ruggine transition-colors p-1"
+                  aria-label="Remove"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            {(!siteConfig.hours || siteConfig.hours.length === 0) && (
+              <div className="vino-mono text-bianco/40 text-[11px] italic">No hours yet.</div>
+            )}
+          </div>
+
+          <div className="mt-6 flex items-center justify-between max-w-2xl">
+            <button
+              onClick={addHour}
+              className="vino-mono-medium text-[10px] tracking-[0.3em] text-ruggine hover:text-bianco transition-colors flex items-center gap-1"
+            >
+              <Plus size={12} /> ADD DAY
+            </button>
+            <button
+              onClick={handleSaveHours}
+              disabled={saving}
+              className="bg-ruggine hover:bg-ruggine/85 text-bianco vino-mono-medium tracking-[0.3em] text-xs px-6 py-3 transition-colors flex items-center gap-2 disabled:opacity-60"
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              SAVE HOURS
+            </button>
+          </div>
+        </section>
+
+        <div className="h-px bg-bianco/10" />
+
+        {/* Menu section */}
+        <section>
+          <div className="flex items-baseline gap-3 mb-4">
+            <div className="vino-mono-medium text-ruggine text-[10px] tracking-[0.4em]">03</div>
             <h2 className="vino-display text-2xl tracking-[0.15em]">WINE LIST</h2>
           </div>
           <p className="vino-mono text-bianco/70 text-xs mb-6 max-w-2xl">

@@ -64,12 +64,18 @@ class MenuData(BaseModel):
     red: List[WineItem] = []
 
 
+class HoursItem(BaseModel):
+    day: str
+    time: str
+
+
 class SiteConfig(BaseModel):
     hero_image_url: Optional[str] = None
     hero_images: Optional[List[str]] = None
     hero_tagline: Optional[str] = None
     since_year: Optional[str] = "MMXXV"
     rotate_seconds: Optional[int] = 6
+    hours: Optional[List[HoursItem]] = None
 
 
 # ---------- Defaults ----------
@@ -123,6 +129,13 @@ DEFAULT_SITE_CONFIG = {
     "hero_tagline": "by tonino",
     "since_year": "MMXXV",
     "rotate_seconds": 6,
+    "hours": [
+        {"day": "Wednesday", "time": "2pm\u2013late"},
+        {"day": "Thursday", "time": "2pm\u2013late"},
+        {"day": "Friday", "time": "12\u2013late"},
+        {"day": "Saturday", "time": "12\u2013late"},
+        {"day": "Sunday", "time": "2\u2013late"},
+    ],
 }
 
 
@@ -178,6 +191,8 @@ async def get_site_config():
             doc["hero_images"] = DEFAULT_SITE_CONFIG["hero_images"]
     if not doc.get("hero_image_url") and doc.get("hero_images"):
         doc["hero_image_url"] = doc["hero_images"][0]
+    if not doc.get("hours"):
+        doc["hours"] = DEFAULT_SITE_CONFIG["hours"]
     return doc
 
 
