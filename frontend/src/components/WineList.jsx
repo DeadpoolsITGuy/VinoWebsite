@@ -54,9 +54,8 @@ const WineList = React.forwardRef(({ menu }, ref) => {
         </div>
 
         <div className="h-px w-full bg-bianco/25 mt-16 md:mt-20" />
-        <div className="flex flex-col items-center mt-8 gap-3">
-          <div className="h-10 w-px bg-bianco/50" />
-          <div className="vino-mono text-bianco/70 text-[10px] tracking-[0.3em]">SPEAK TO OUR STAFF FOR BOTTLE & GLASS PRICING</div>
+        <div className="flex justify-center mt-6">
+          <div className="h-8 w-px bg-bianco/50" />
         </div>
       </div>
     </section>
