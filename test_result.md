@@ -116,6 +116,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Tested successfully. Returns default menu with all 5 categories (fizz, white, orange, rose, red). Each item has name and price fields. Returns saved menu when data exists in DB."
+      - working: true
+        agent: "testing"
+        comment: "Bug fix verified (2026-01-XX). MongoDB menu document successfully deleted. API now returns FULL DEFAULT_MENU with correct counts: fizz=5, white=9, orange=1, rose=3, red=11 (total 29 wines). All first items match expected defaults. No placeholder data detected. Bug fixed successfully."
   
   - task: "GET /api/site-config - Public endpoint"
     implemented: true
@@ -205,12 +208,12 @@ frontend:
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "All backend endpoints tested and verified"
+    - "Bug fix verification completed - menu returns full defaults"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -218,3 +221,5 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: "Completed comprehensive backend API testing for Vino by Tonino. All 14 test cases passed (100% success rate). Tested: public endpoints (menu, site-config), admin authentication (login with correct/incorrect password), token verification (valid/invalid/missing tokens), protected endpoints (menu update, site-config update, file upload), and authorization on all protected routes. Database persistence verified for menu and site-config updates. File upload functionality verified with accessible uploaded files. Final DB state: Menu contains test data (2 fizz, 1 white, 1 orange, 1 rose, 2 red items). Site config updated with test values (hero_tagline: 'Test Tagline by Tonino', since_year: 'MMXXVI'). No critical issues found. All endpoints working as expected."
+  - agent: "testing"
+    message: "Bug fix verification completed successfully. Verified that MongoDB menu document has been deleted and GET /api/menu now returns the FULL DEFAULT_MENU (29 wines total) instead of placeholder data. Counts verified: fizz=5 (Prosecco Extra Dry...), white=9 (Blanc de Blanc...), orange=1 (Orange, No es Pituko...), rose=3 (Castelão Rosé...), red=11 (Rioja Alavesa...). All first items match expected defaults. Admin login still functional. Skipped PUT /api/admin/menu mutation test as instructed to preserve default state. Bug fix confirmed working."
