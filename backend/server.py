@@ -56,12 +56,13 @@ class WineItem(BaseModel):
     price: str
 
 
+class MenuCategory(BaseModel):
+    name: str
+    items: List[WineItem] = []
+
+
 class MenuData(BaseModel):
-    fizz: List[WineItem] = []
-    white: List[WineItem] = []
-    orange: List[WineItem] = []
-    rose: List[WineItem] = []
-    red: List[WineItem] = []
+    categories: List[MenuCategory] = []
 
 
 class HoursItem(BaseModel):
@@ -79,47 +80,83 @@ class SiteConfig(BaseModel):
 
 
 # ---------- Defaults ----------
-DEFAULT_MENU: Dict[str, List[Dict[str, str]]] = {
-    "fizz": [
-        {"name": "Prosecco Extra Dry, Canal Grando, Italy", "price": "28 / 5.5"},
-        {"name": "Crémant de Bourgogne Brut, France", "price": "36 / 6.5"},
-        {"name": "Cava Brut, + & + Seleccion, Spain", "price": "31"},
-        {"name": "Lambrusco Rosso Secco La Favorita, Italy", "price": "26"},
-        {"name": "Franciacorta Extra Brut, Italy", "price": "60"},
-    ],
-    "white": [
-        {"name": "Blanc de Blanc, Château Oumsiyat, Lebanon", "price": "26 / 6.5"},
-        {"name": "Picpoul de Pinet, Le Montalus, France", "price": "29 / 7"},
-        {"name": "Fernão Pires, Cintila, Portugal", "price": "24 / 6"},
-        {"name": "Sauvignon Blanc, Lomond Wines, South Africa", "price": "34 / 8.5"},
-        {"name": "Verdeca, Talò, San Marzano, Italy", "price": "29 / 7.5"},
-        {"name": "Gavi Villa Sparina, Italy", "price": "35"},
-        {"name": "Zibibbo, Vitese, Colomba Bianca, Italy", "price": "28"},
-        {"name": "Grenache Blanc, Big Buzz, France", "price": "27"},
-        {"name": "Viognier, No es Pituko, Chile", "price": "35"},
-    ],
-    "orange": [
-        {"name": "Orange, No es Pituko, Chile", "price": "32 / 8"},
-    ],
-    "rose": [
-        {"name": "Castelão Rosé, Cintila, Portugal", "price": "24 / 6"},
-        {"name": "Rosato, Anemone, Alghero, Italy", "price": "29 / 7"},
-        {"name": "Syrah/Grenache Rosé, Le Campuget, France", "price": "27"},
-    ],
-    "red": [
-        {"name": "Rioja Alavesa, Mayela, Bideona, Spain", "price": "29 / 7.5"},
-        {"name": "Castelão, Cintila, Portugal", "price": "24 / 6"},
-        {"name": "Montepulciano Blend, Anima Osca, Italy", "price": "32 / 8"},
-        {"name": "Malbec, Terroir Unico, Argentina", "price": "34 / 9"},
-        {"name": "Mucchietto, Italy", "price": "34"},
-        {"name": "Chianti, Gentilesco, Bonacchi, Italy", "price": "28"},
-        {"name": "Barbera d’Alba, Terre del Barolo, Italy", "price": "32"},
-        {"name": "Pinot Noir, Little Yering, Australia", "price": "35"},
-        {"name": "Saperavi, Vachnadziani Winery, Georgia", "price": "27"},
-        {"name": "Cabernet Sauvignon, No es Pituko, Chile", "price": "30"},
-        {"name": "Amarone, Italy", "price": "50"},
-    ],
+DEFAULT_MENU: Dict[str, List[Dict]] = {
+    "categories": [
+        {
+            "name": "FIZZ",
+            "items": [
+                {"name": "Prosecco Extra Dry, Canal Grando, Italy", "price": "28 / 5.5"},
+                {"name": "Crémant de Bourgogne Brut, France", "price": "36 / 6.5"},
+                {"name": "Cava Brut, + & + Seleccion, Spain", "price": "31"},
+                {"name": "Lambrusco Rosso Secco La Favorita, Italy", "price": "26"},
+                {"name": "Franciacorta Extra Brut, Italy", "price": "60"},
+            ],
+        },
+        {
+            "name": "WHITE",
+            "items": [
+                {"name": "Blanc de Blanc, Château Oumsiyat, Lebanon", "price": "26 / 6.5"},
+                {"name": "Picpoul de Pinet, Le Montalus, France", "price": "29 / 7"},
+                {"name": "Fernão Pires, Cintila, Portugal", "price": "24 / 6"},
+                {"name": "Sauvignon Blanc, Lomond Wines, South Africa", "price": "34 / 8.5"},
+                {"name": "Verdeca, Talò, San Marzano, Italy", "price": "29 / 7.5"},
+                {"name": "Gavi Villa Sparina, Italy", "price": "35"},
+                {"name": "Zibibbo, Vitese, Colomba Bianca, Italy", "price": "28"},
+                {"name": "Grenache Blanc, Big Buzz, France", "price": "27"},
+                {"name": "Viognier, No es Pituko, Chile", "price": "35"},
+            ],
+        },
+        {
+            "name": "ORANGE",
+            "items": [
+                {"name": "Orange, No es Pituko, Chile", "price": "32 / 8"},
+            ],
+        },
+        {
+            "name": "ROSE",
+            "items": [
+                {"name": "Castelão Rosé, Cintila, Portugal", "price": "24 / 6"},
+                {"name": "Rosato, Anemone, Alghero, Italy", "price": "29 / 7"},
+                {"name": "Syrah/Grenache Rosé, Le Campuget, France", "price": "27"},
+            ],
+        },
+        {
+            "name": "RED",
+            "items": [
+                {"name": "Rioja Alavesa, Mayela, Bideona, Spain", "price": "29 / 7.5"},
+                {"name": "Castelão, Cintila, Portugal", "price": "24 / 6"},
+                {"name": "Montepulciano Blend, Anima Osca, Italy", "price": "32 / 8"},
+                {"name": "Malbec, Terroir Unico, Argentina", "price": "34 / 9"},
+                {"name": "Mucchietto, Italy", "price": "34"},
+                {"name": "Chianti, Gentilesco, Bonacchi, Italy", "price": "28"},
+                {"name": "Barbera d’Alba, Terre del Barolo, Italy", "price": "32"},
+                {"name": "Pinot Noir, Little Yering, Australia", "price": "35"},
+                {"name": "Saperavi, Vachnadziani Winery, Georgia", "price": "27"},
+                {"name": "Cabernet Sauvignon, No es Pituko, Chile", "price": "30"},
+                {"name": "Amarone, Italy", "price": "50"},
+            ],
+        },
+    ]
 }
+
+
+LEGACY_KEYS = ["fizz", "white", "orange", "rose", "red"]
+
+
+def _normalise_menu(doc: Dict) -> Dict:
+    """Return a dict with a `categories` list, migrating legacy flat format."""
+    if not doc:
+        return DEFAULT_MENU
+    if "categories" in doc and isinstance(doc.get("categories"), list):
+        return {"categories": doc["categories"]}
+    # Migrate legacy flat shape → categories list
+    categories = []
+    for key in LEGACY_KEYS:
+        if key in doc and isinstance(doc[key], list) and doc[key]:
+            categories.append({"name": key.upper(), "items": doc[key]})
+    if not categories:
+        return DEFAULT_MENU
+    return {"categories": categories}
 
 DEFAULT_SITE_CONFIG = {
     "hero_image_url": "https://images.squarespace-cdn.com/content/v1/67f667faca6fd714aaa732b0/dcb76f8f-f576-4f2a-a31d-031d8d8a7698/uliana-kopanytsia-epHhP3H71sw-unsplash.jpg",
@@ -174,7 +211,7 @@ async def get_menu():
     if not doc:
         return DEFAULT_MENU
     doc.pop("_id", None)
-    return doc
+    return _normalise_menu(doc)
 
 
 @api_router.get("/site-config")
@@ -214,9 +251,10 @@ async def admin_verify(_: bool = Depends(require_admin)):
 @api_router.put("/admin/menu")
 async def update_menu(menu: MenuData, _: bool = Depends(require_admin)):
     data = menu.dict()
-    await db.menu.update_one(
+    # Overwrite the doc completely to avoid stale legacy keys lingering
+    await db.menu.replace_one(
         {"_id": "current"},
-        {"$set": data},
+        {"_id": "current", **data},
         upsert=True,
     )
     return data

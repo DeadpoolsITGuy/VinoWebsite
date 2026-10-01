@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 
 const TOKEN_KEY = 'vino_admin_token';
-const CATEGORIES = ['fizz', 'white', 'orange', 'rose', 'red'];
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -57,7 +56,9 @@ const Admin = () => {
     setLoading(true);
     try {
       const [m, s] = await Promise.all([getMenu(), getSiteConfig()]);
-      setMenu(m);
+      // Normalise menu into { categories: [...] }
+      const normalised = { categories: Array.isArray(m?.categories) ? m.categories : [] };
+      setMenu(normalised);
       // Ensure hero_images exists
       const cfg = { ...s };
       if (!cfg.hero_images || cfg.hero_images.length === 0) {
@@ -210,19 +211,69 @@ const Admin = () => {
     }
   };
 
-  const updateItem = (cat, idx, field, value) => {
+  const updateItem = (catIdx, idx, field, value) => {
     setMenu((prev) => {
-      const list = [...(prev[cat] || [])];
-      list[idx] = { ...list[idx], [field]: value };
-      return { ...prev, [cat]: list };
+      const cats = [...(prev.categories || [])];
+      const items = [...(cats[catIdx]?.items || [])];
+      items[idx] = { ...items[idx], [field]: value };
+      cats[catIdx] = { ...cats[catIdx], items };
+      return { ...prev, categories: cats };
     });
   };
 
-  const addItem = (cat) =>
-    setMenu((prev) => ({ ...prev, [cat]: [...(prev[cat] || []), { name: '', price: '' }] }));
+  const addItem = (catIdx) =>
+    setMenu((prev) => {
+      const cats = [...(prev.categories || [])];
+      cats[catIdx] = {
+        ...cats[catIdx],
+        items: [...(cats[catIdx]?.items || []), { name: '', price: '' }],
+      };
+      return { ...prev, categories: cats };
+    });
 
-  const removeItem = (cat, idx) =>
-    setMenu((prev) => ({ ...prev, [cat]: prev[cat].filter((_, i) => i !== idx) }));
+  const removeItem = (catIdx, idx) =>
+    setMenu((prev) => {
+      const cats = [...(prev.categories || [])];
+      cats[catIdx] = {
+        ...cats[catIdx],
+        items: (cats[catIdx]?.items || []).filter((_, i) => i !== idx),
+      };
+      return { ...prev, categories: cats };
+    });
+
+  const renameCategory = (catIdx, name) =>
+    setMenu((prev) => {
+      const cats = [...(prev.categories || [])];
+      cats[catIdx] = { ...cats[catIdx], name };
+      return { ...prev, categories: cats };
+    });
+
+  const addCategory = () =>
+    setMenu((prev) => ({
+      ...prev,
+      categories: [...(prev.categories || []), { name: 'NEW CATEGORY', items: [] }],
+    }));
+
+  const removeCategory = (catIdx) => {
+    const cat = menu?.categories?.[catIdx];
+    const count = cat?.items?.length || 0;
+    const label = cat?.name || 'this category';
+    if (count > 0 && !window.confirm(`Remove "${label}" and its ${count} wines?`)) return;
+    setMenu((prev) => ({
+      ...prev,
+      categories: (prev.categories || []).filter((_, i) => i !== catIdx),
+    }));
+  };
+
+  const moveCategory = (catIdx, dir) => {
+    setMenu((prev) => {
+      const cats = [...(prev.categories || [])];
+      const target = catIdx + dir;
+      if (target < 0 || target >= cats.length) return prev;
+      [cats[catIdx], cats[target]] = [cats[target], cats[catIdx]];
+      return { ...prev, categories: cats };
+    });
+  };
 
   if (!token) {
     return (
@@ -543,58 +594,104 @@ const Admin = () => {
             <h2 className="vino-display text-2xl tracking-[0.15em]">WINE LIST</h2>
           </div>
           <p className="vino-mono text-bianco/70 text-xs mb-6 max-w-2xl">
-            Add, edit, or remove wines under each category. Save when you're happy — changes appear on the public site instantly.
+            Rename, reorder, add or remove categories. Then edit, add or remove wines within each category. Changes appear on the public site instantly after saving.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-x-10 gap-y-10">
-            {CATEGORIES.map((cat) => (
-              <div key={cat}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="vino-mono-medium text-bianco text-[11px] tracking-[0.4em] uppercase">
-                    {cat}
-                  </div>
+          <div className="space-y-6">
+            {(menu.categories || []).map((cat, catIdx) => (
+              <div key={catIdx} className="border border-bianco/10 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="vino-mono-medium text-bianco/40 text-[10px] tracking-[0.3em] w-6 text-right">
+                    {String(catIdx + 1).padStart(2, '0')}
+                  </span>
+                  <input
+                    type="text"
+                    value={cat.name}
+                    onChange={(e) => renameCategory(catIdx, e.target.value)}
+                    placeholder="CATEGORY NAME"
+                    className="flex-1 bg-transparent border-b border-bianco/20 focus:border-bianco text-bianco vino-mono-medium tracking-[0.4em] uppercase text-sm px-1 py-2 outline-none transition-colors"
+                  />
                   <button
-                    onClick={() => addItem(cat)}
-                    className="vino-mono-medium text-[10px] tracking-[0.3em] text-ruggine hover:text-bianco transition-colors flex items-center gap-1"
+                    onClick={() => moveCategory(catIdx, -1)}
+                    disabled={catIdx === 0}
+                    className="text-bianco/50 hover:text-bianco disabled:opacity-20 transition-colors p-1"
+                    aria-label="Move up"
                   >
-                    <Plus size={12} /> ADD
+                    <ArrowLeft size={14} className="rotate-90" />
+                  </button>
+                  <button
+                    onClick={() => moveCategory(catIdx, 1)}
+                    disabled={catIdx === (menu.categories || []).length - 1}
+                    className="text-bianco/50 hover:text-bianco disabled:opacity-20 transition-colors p-1"
+                    aria-label="Move down"
+                  >
+                    <ArrowRight size={14} className="rotate-90" />
+                  </button>
+                  <button
+                    onClick={() => removeCategory(catIdx)}
+                    className="text-bianco/50 hover:text-ruggine transition-colors p-1"
+                    aria-label="Remove category"
+                  >
+                    <Trash2 size={14} />
                   </button>
                 </div>
+
                 <div className="space-y-2">
-                  {(menu[cat] || []).map((item, idx) => (
+                  {(cat.items || []).map((item, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <input
                         type="text"
                         value={item.name}
-                        onChange={(e) => updateItem(cat, idx, 'name', e.target.value)}
+                        onChange={(e) => updateItem(catIdx, idx, 'name', e.target.value)}
                         placeholder="Wine name, region, country"
                         className="flex-1 bg-black/20 border border-bianco/15 focus:border-bianco text-bianco vino-mono text-[12px] px-3 py-2 outline-none transition-colors"
                       />
                       <input
                         type="text"
                         value={item.price}
-                        onChange={(e) => updateItem(cat, idx, 'price', e.target.value)}
+                        onChange={(e) => updateItem(catIdx, idx, 'price', e.target.value)}
                         placeholder="28 / 5.5"
                         className="w-24 bg-black/20 border border-bianco/15 focus:border-bianco text-bianco vino-mono text-[12px] px-3 py-2 outline-none transition-colors text-right"
                       />
                       <button
-                        onClick={() => removeItem(cat, idx)}
-                        className="text-bianco/50 hover:text-ruggine transition-colors"
+                        onClick={() => removeItem(catIdx, idx)}
+                        className="text-bianco/50 hover:text-ruggine transition-colors p-1"
                         aria-label="Remove"
                       >
                         <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
-                  {(!menu[cat] || menu[cat].length === 0) && (
+                  {(!cat.items || cat.items.length === 0) && (
                     <div className="vino-mono text-bianco/40 text-[11px] italic">No items yet.</div>
                   )}
                 </div>
+
+                <div className="mt-4">
+                  <button
+                    onClick={() => addItem(catIdx)}
+                    className="vino-mono-medium text-[10px] tracking-[0.3em] text-ruggine hover:text-bianco transition-colors flex items-center gap-1"
+                  >
+                    <Plus size={12} /> ADD WINE
+                  </button>
+                </div>
               </div>
             ))}
+
+            {(!menu.categories || menu.categories.length === 0) && (
+              <div className="vino-mono text-bianco/40 text-[12px] italic border border-dashed border-bianco/15 p-6 text-center">
+                No categories yet — add one to get started.
+              </div>
+            )}
           </div>
 
-          <div className="mt-10 flex justify-end">
+          <div className="mt-6 flex items-center justify-between">
+            <button
+              onClick={addCategory}
+              className="vino-mono-medium text-[10px] tracking-[0.3em] text-ruggine hover:text-bianco transition-colors flex items-center gap-1"
+            >
+              <Plus size={12} /> ADD CATEGORY
+            </button>
             <button
               onClick={handleSaveMenu}
               disabled={saving}
